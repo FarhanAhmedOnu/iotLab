@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Time Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-8">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">QR Code Time Tracker</h1>
+        
+        <p class="mb-4 text-center text-gray-600">Looking for QR code with text: <span class="font-bold">"MY_SPECIAL_CODE"</span></p>
+        
+        <div class="relative mb-6">
+            <div class="aspect-w-1 aspect-h-1 w-full">
+                <video id="video" class="w-full h-auto border-2 border-gray-300 rounded-md" playsinline></video>
+            </div>
+            <div id="overlay" class="absolute inset-0 flex items-center justify-center hidden">
+                <div class="border-4 border-green-500 rounded-md w-full h-full"></div>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <button id="startButton" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Start Camera
+            </button>
+            <button id="stopButton" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 hidden mt-2">
+                Stop Camera
+            </button>
+        </div>
+        
+        <div id="resultContainer" class="hidden bg-gray-50 p-4 rounded-md mb-4">
+            <h2 class="text-lg font-semibold text-gray-800 mb-2">Scan Result</h2>
+            <div id="result"></div>
+        </div>
+        
+        <div id="historyContainer" class="hidden">
+            <h2 class="text-lg font-semibold text-gray-800 mb-2">Scan History</h2>
+            <div id="history" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        // Hardcoded QR code text to look for
+        const TARGET_QR_TEXT = "MY_SPECIAL_CODE";
+        
+        // DOM elements
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const result = document.getElementById('result');
+        const historyContainer = document.getElementById('historyContainer');
+        const history = document.getElementById('history');
+        const overlay = document.getElementById('overlay');
+        
+        // Variables
+        let stream = null;
+        let scanning = false;
+        let scanHistory = {};
+        const canvas = document.createElement('canvas');
+        const canvasContext = canvas.getContext('2d');
+        
+        // Start camera
+        startButton.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                video.play();
+                
+                startButton.classList.add('hidden');
+                stopButton.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+                
+                scanning = true;
+                scanFrame();
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Could not access the camera. Please ensure you have granted camera permissions.');
+            }
+        });
+        
+        // Stop camera
+        stopButton.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            startButton.classList.remove('hidden');
+            stopButton.classList.add('hidden');
+            scanning = false;
+        });
+        
+        // Scan frames for QR codes
+        function scanFrame() {
+            if (!scanning) return;
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: 'dontInvert',
+                });
+                
+                if (code) {
+                    overlay.classList.remove('hidden');
+                    
+                    if (code.data === TARGET_QR_TEXT) {
+                        handleTargetQRCode();
+                    } else {
+                        result.innerHTML = `
+                            <p class="text-red-600">Wrong QR code detected</p>
+                            <p class="text-gray-600">Looking for: ${TARGET_QR_TEXT}</p>
+                            <p class="text-gray-600">Found: ${code.data}</p>
+                        `;
+                        resultContainer.classList.remove('hidden');
+                    }
+                    
+                    // Pause scanning for 2 seconds after detection
+                    scanning = false;
+                    setTimeout(() => {
+                        overlay.classList.add('hidden');
+                        scanning = true;
+                        scanFrame();
+                    }, 2000);
+                    return;
+                } else {
+                    overlay.classList.add('hidden');
+                }
+            }
+            
+            requestAnimationFrame(scanFrame);
+        }
+        
+        // Handle the target QR code scanning
+        function handleTargetQRCode() {
+            const now = new Date();
+            const currentTime = now.toLocaleTimeString();
+            const currentDate = now.toLocaleDateString();
+            
+            if (scanHistory.timestamp) {
+                // Code was scanned before - calculate time difference
+                const previousTime = new Date(scanHistory.timestamp);
+                const timeDiffMs = now - previousTime;
+                const timeDiffSec = Math.floor(timeDiffMs / 1000);
+                const minutes = Math.floor(timeDiffSec / 60);
+                const seconds = timeDiffSec % 60;
+                
+                const timeDiffFormatted = `${minutes > 0 ? `${minutes}m ` : ''}${seconds}s`;
+                
+                result.innerHTML = `
+                    <p class="text-green-600 font-medium">Correct QR Code Scanned!</p>
+                    <p class="text-gray-600">First scanned: ${scanHistory.date} at ${scanHistory.time}</p>
+                    <p class="text-gray-600">Scanned again: ${currentDate} at ${currentTime}</p>
+                    <p class="text-blue-600 font-bold">Time between scans: ${timeDiffFormatted}</p>
+                `;
+                
+                // Add to history
+                const historyItem = document.createElement('div');
+                historyItem.className = 'border-b border-gray-200 pb-2';
+                historyItem.innerHTML = `
+                    <p class="text-sm">First: ${scanHistory.date} ${scanHistory.time}</p>
+                    <p class="text-sm">Second: ${currentDate} ${currentTime}</p>
+                    <p class="text-sm font-medium">Duration: ${timeDiffFormatted}</p>
+                `;
+                history.prepend(historyItem);
+            } else {
+                // First time scanning this code
+                scanHistory = {
+                    timestamp: now.getTime(),
+                    date: currentDate,
+                    time: currentTime
+                };
+                
+                result.innerHTML = `
+                    <p class="text-green-600 font-medium">Correct QR Code Scanned!</p>
+                    <p class="text-gray-600">First scanned at: ${currentDate} ${currentTime}</p>
+                    <p class="text-blue-600">Scan this code again to measure time difference.</p>
+                `;
+                
+                // Add to history
+                const historyItem = document.createElement('div');
+                historyItem.className = 'border-b border-gray-200 pb-2';
+                historyItem.innerHTML = `
+                    <p class="text-sm">First scan: ${currentDate} ${currentTime}</p>
+                    <p class="text-sm text-gray-500">Waiting for second scan...</p>
+                `;
+                history.prepend(historyItem);
+            }
+            
+            resultContainer.classList.remove('hidden');
+            historyContainer.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
