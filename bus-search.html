@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhaka Bus Live Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-800 mb-2">Dhaka City Bus Tracker</h1>
+            <p class="text-gray-600">Find and track buses in real-time</p>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <label for="from" class="block text-sm font-medium text-gray-700 mb-1">From</label>
+                    <div class="relative">
+                        <select id="from" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="" disabled selected>Select starting point</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <label for="to" class="block text-sm font-medium text-gray-700 mb-1">To</label>
+                    <div class="relative">
+                        <select id="to" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="" disabled selected>Select destination</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-end">
+                    <button id="searchBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md w-full md:w-auto transition duration-300">
+                        <i class="fas fa-search mr-2"></i> Search Buses
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="results" class="hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Available Buses</h2>
+            <div id="busResults" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+        </div>
+
+        <div id="noResults" class="hidden text-center py-12">
+            <i class="fas fa-bus-slash text-5xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-700 mb-2">No buses found for this route</h3>
+            <p class="text-gray-500">Try searching for different locations</p>
+        </div>
+
+        <div id="mapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl">
+                <div class="flex justify-between items-center border-b p-4">
+                    <h3 id="busTitle" class="text-lg font-semibold">Bus Tracking</h3>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-4">
+                    <div id="map" class="rounded-lg"></div>
+                    <div id="mapStatus" class="mt-2 text-sm text-gray-600"></div>
+                    <div id="busDetails" class="mt-4 grid grid-cols-2 gap-2 text-sm"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Popular Routes</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="popularRoutes"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

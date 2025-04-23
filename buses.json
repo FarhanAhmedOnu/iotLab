@@ -1,0 +1,105 @@
+{
+    "buses": [
+        {
+            "id": 1,
+            "name": "BRTC Bus 101",
+            "type": "AC",
+            "route": ["Gabtoli", "Asad Gate", "Farmgate", "Kawran Bazar", "Motijheel"],
+            "routeCoordinates": [
+                [23.7779, 90.3496],
+                [23.7804, 90.3702],
+                [23.7985, 90.4233],
+                [23.7465, 90.3847]
+            ],
+            "schedule": {
+                "start": "6:00 AM",
+                "end": "10:00 PM"
+            },
+            "fare": {
+                "min": 25,
+                "max": 40
+            },
+            "frequency": "15 minutes",
+            "thingspeak": {
+                "channelId": "123456",
+                "readApiKey": "XYZ123"
+            }
+        },
+        {
+            "id": 2,
+            "name": "Mirpur Service 3",
+            "type": "Non-AC",
+            "route": ["Mirpur", "Kallyanpur", "Technical", "Gabtoli", "New Market", "Gulistan"],
+            "routeCoordinates": [
+                [23.8064, 90.3685],
+                [23.8048, 90.3772],
+                [23.8001, 90.3594],
+                [23.7779, 90.3496],
+                [23.7376, 90.3807]
+            ],
+            "schedule": {
+                "start": "5:30 AM",
+                "end": "11:30 PM"
+            },
+            "fare": {
+                "min": 15,
+                "max": 30
+            },
+            "frequency": "10 minutes",
+            "thingspeak": {
+                "channelId": "234567",
+                "readApiKey": "ABC456"
+            }
+        },
+        {
+            "id": 3,
+            "name": "Uttara Express",
+            "type": "AC",
+            "route": ["Uttara", "Airport", "Banani", "Mohakhali", "Panthapath", "Dhanmondi"],
+            "routeCoordinates": [
+                [23.8709, 90.3838],
+                [23.8433, 90.3978],
+                [23.7949, 90.4068],
+                [23.7778, 90.4055],
+                [23.7465, 90.3847]
+            ],
+            "schedule": {
+                "start": "7:00 AM",
+                "end": "9:00 PM"
+            },
+            "fare": {
+                "min": 30,
+                "max": 50
+            },
+            "frequency": "20 minutes",
+            "thingspeak": {
+                "channelId": "345678",
+                "readApiKey": "DEF789"
+            }
+        }
+    ],
+    "locations": [
+        "Gabtoli",
+        "Mirpur",
+        "Dhanmondi",
+        "Farmgate",
+        "Mohakhali",
+        "Uttara",
+        "Motijheel",
+        "Gulistan",
+        "Asad Gate",
+        "Kawran Bazar",
+        "Kallyanpur",
+        "Technical",
+        "New Market",
+        "Airport",
+        "Banani",
+        "Panthapath"
+    ],
+    "popularRoutes": [
+        "Mirpur - Motijheel",
+        "Uttara - Farmgate",
+        "Dhanmondi - Gulistan",
+        "Gabtoli - Mohakhali"
+    ]
+}
