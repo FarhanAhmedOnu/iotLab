@@ -3,99 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thingspeak Location Data Viewer</title>
+    <title>Bus Location Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        #map {
-            height: 400px;
-            width: 100%;
-            border: 1px solid #ccc;
-        }
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        input, button {
-            padding: 8px 12px;
-        }
-        .data-display {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 5px;
+        #map { height: 500px; }
+        .bus-marker {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%23ef4444" d="M400 32H112C85.5 32 64 53.5 64 80V128c-17.7 0-32 14.3-32 32v128c0 17.7 14.3 32 32 32v80c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-16h192v16c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16v-80c17.7 0 32-14.3 32-32V160c0-17.7-14.3-32-32-32V80c0-26.5-21.5-48-48-48zM136 96h240c8.8 0 16 7.2 16 16v16H120V112c0-8.8 7.2-16 16-16zm240 224H136c-8.8 0-16-7.2-16-16v-96h272v96c0 8.8-7.2 16-16 16zM128 288c-17.7 0-32-14.3-32-32s14.3-32 32-32s32 14.3 32 32s-14.3 32-32 32zm288-64c17.7 0 32 14.3 32 32s-14.3 32-32 32s-32-14.3-32-32s14.3-32 32-32z"/></svg>');
+            background-size: cover;
+            width: 40px;
+            height: 40px;
         }
     </style>
 </head>
-<body>
-    <h1>Thingspeak Location Data Viewer</h1>
-    <div class="container">
-        <div class="controls">
-            <input type="text" id="channelId" placeholder="Channel ID">
-            <input type="text" id="apiKey" placeholder="Read API Key">
-            <button id="fetchData">Fetch Location Data</button>
-            <select id="resultCount">
-                <option value="1">Latest</option>
-                <option value="10">Last 10</option>
-                <option value="50">Last 50</option>
-            </select>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-indigo-800 mb-2">Bus Location Tracker</h1>
+            <p class="text-lg text-gray-600">Real-time tracking of your bus location</p>
+        </header>
+
+        <!-- Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Bus Info Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-indigo-100 p-3 rounded-full mr-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Bus Route 101</h3>
+                        <p class="text-gray-500">Dhaka City Service</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Last Update</span>
+                        <span class="font-medium" id="lastUpdate">Loading...</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Status</span>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full" id="status">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Info Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Location</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Latitude</span>
+                        <span class="font-medium" id="latitude">23.7004</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Longitude</span>
+                        <span class="font-medium" id="longitude">90.4287</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Speed</span>
+                        <span class="font-medium">25 km/h</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Stop Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Next Stop</h3>
+                <div class="flex items-center mb-3">
+                    <div class="bg-yellow-100 p-2 rounded-full mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">Farmgate Station</h4>
+                        <p class="text-sm text-gray-500">~5 minutes away</p>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-indigo-600 h-2.5 rounded-full" style="width: 75%"></div>
+                </div>
+            </div>
         </div>
-        
-        <div id="map"></div>
-        
-        <div class="data-display">
-            <h3>Location Data</h3>
-            <pre id="locationData">Enter your channel ID and API key to fetch data</pre>
+
+        <!-- Map Section -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Live Location Map</h2>
+            </div>
+            <div id="map" class="w-full"></div>
+        </div>
+
+        <!-- Data Section -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Location Data</h2>
+            </div>
+            <div class="p-4">
+                <pre id="locationData" class="bg-gray-50 p-4 rounded-lg overflow-x-auto text-sm"></pre>
+            </div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        document.getElementById('fetchData').addEventListener('click', function() {
-            const channelId = document.getElementById('channelId').value;
-            const apiKey = document.getElementById('apiKey').value;
-            const results = document.getElementById('resultCount').value;
-            
-            if (!channelId || !apiKey) {
-                alert('Please enter both Channel ID and API Key');
-                return;
-            }
-            
-            fetchLocationData(channelId, apiKey, results);
+        // Hardcoded channel details
+        const channelId = 2930892;
+        const apiKey = ''; // Public read API key (if any)
+        const results = 1; // Only get the latest location
+
+        // Initialize map centered on Dhaka
+        const map = L.map('map').setView([23.7004, 90.4287], 13);
+        
+        // Add tile layer (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Custom bus icon
+        const busIcon = L.divIcon({
+            className: 'bus-marker',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
         });
-        
-        function fetchLocationData(channelId, apiKey, results) {
-            const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=${results}`;
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('locationData').textContent = JSON.stringify(data, null, 2);
-                    // Here you would add code to process and display the location data on a map
-                    console.log(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                    document.getElementById('locationData').textContent = 'Error fetching data: ' + error.message;
-                });
+
+        // Marker for the bus
+        let busMarker = L.marker([23.7004, 90.4287], {icon: busIcon})
+            .addTo(map)
+            .bindPopup('Bus 101 - Current Location');
+
+        // Function to fetch location data
+        async function fetchLocationData() {
+            try {
+                const url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?api_key=${apiKey}&results=${results}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // Update the data display
+                document.getElementById('locationData').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.feeds && data.feeds.length > 0) {
+                    const latestFeed = data.feeds[0];
+                    const lat = parseFloat(latestFeed.field1);
+                    const lng = parseFloat(latestFeed.field2);
+                    const updatedAt = new Date(latestFeed.created_at).toLocaleTimeString();
+                    
+                    // Update the UI
+                    document.getElementById('latitude').textContent = lat;
+                    document.getElementById('longitude').textContent = lng;
+                    document.getElementById('lastUpdate').textContent = updatedAt;
+                    
+                    // Update the map marker
+                    busMarker.setLatLng([lat, lng])
+                        .setPopupContent(`Bus 101 - Updated at ${updatedAt}`);
+                    map.setView([lat, lng], 13);
+                }
+            } catch (error) {
+                console.error('Error fetching location data:', error);
+                document.getElementById('locationData').textContent = 'Error fetching data: ' + error.message;
+            }
         }
-        
-        // Map initialization would go here
-        function initMap() {
-            // This would initialize your map (Google Maps, Leaflet, etc.)
-            console.log('Map would be initialized here');
-        }
-        
-        // Initialize when page loads
-        window.onload = initMap;
+
+        // Fetch data immediately and then every 30 seconds
+        fetchLocationData();
+        setInterval(fetchLocationData, 30000);
+
+        // Initialize with sample data
+        document.getElementById('locationData').textContent = JSON.stringify({
+            "channel": {
+                "id": 2930892,
+                "name": "location",
+                "latitude": "0.0",
+                "longitude": "0.0",
+                "field1": "Latitude",
+                "field2": "Longitude",
+                "created_at": "2025-04-23T07:46:46Z",
+                "updated_at": "2025-04-23T08:13:39Z",
+                "last_entry_id": 19
+            },
+            "feeds": [
+                {
+                    "created_at": "2025-04-23T17:00:01Z",
+                    "entry_id": 19,
+                    "field1": "23.7004",
+                    "field2": "90.4287"
+                }
+            ]
+        }, null, 2);
     </script>
 </body>
 </html>
