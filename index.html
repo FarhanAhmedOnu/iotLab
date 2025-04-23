@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityBus - Public Transportation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#10B981',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-primary text-white shadow-md">
+            <div class="container mx-auto px-4 py-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <h1 class="text-2xl font-bold">CityBus</h1>
+                    </div>
+                    <div>
+                        <button class="bg-white text-primary px-4 py-2 rounded-full font-medium hover:bg-gray-100 transition">
+                            Sign In
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome to CityBus</h2>
+                <p class="text-gray-600 mb-8">Your smart way to travel around the city</p>
+                
+                <!-- Feature Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <!-- Real-time Map -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                        <div class="p-6">
+                            <div class="flex items-center justify-center bg-blue-100 rounded-full h-16 w-16 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Real-time Map</h3>
+                            <p class="text-gray-600 mb-4">Track buses in real-time on our interactive map</p>
+                            <a href="/Map-View.html" class="block w-full bg-primary hover:bg-secondary text-white text-center py-2 px-4 rounded-lg font-medium transition">
+                                View Map
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bus -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                        <div class="p-6">
+                            <div class="flex items-center justify-center bg-green-100 rounded-full h-16 w-16 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Search Bus</h3>
+                            <p class="text-gray-600 mb-4">Find the best route for your journey</p>
+                            <a href="/bus-search.html" class="block w-full bg-accent hover:bg-green-700 text-white text-center py-2 px-4 rounded-lg font-medium transition">
+                                Search Now
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Make Payment -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                        <div class="p-6">
+                            <div class="flex items-center justify-center bg-purple-100 rounded-full h-16 w-16 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">Make Payment</h3>
+                            <p class="text-gray-600 mb-4">Quick and secure payment options</p>
+                            <a href="/payment" class="block w-full bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-lg font-medium transition">
+                                Pay Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Features -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Plan Your Journey</h3>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="text" placeholder="From" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        <input type="text" placeholder="To" class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="bg-primary hover:bg-secondary text-white py-3 px-6 rounded-lg font-medium transition">
+                            Find Route
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Trips -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Your Recent Trips</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                            <div>
+                                <h4 class="font-medium">Route 42 - Downtown Express</h4>
+                                <p class="text-sm text-gray-600">Today, 8:30 AM</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Completed</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                            <div>
+                                <h4 class="font-medium">Route 15 - University Line</h4>
+                                <p class="text-sm text-gray-600">Yesterday, 4:15 PM</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">In Progress</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-8">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="text-xl font-bold">CityBus</h2>
+                        <p class="text-gray-400">Smart transportation for everyone</p>
+                    </div>
+                    <div class="flex space-x-6">
+                        <a href="#" class="hover:text-primary transition">About</a>
+                        <a href="#" class="hover:text-primary transition">Contact</a>
+                        <a href="#" class="hover:text-primary transition">Terms</a>
+                        <a href="#" class="hover:text-primary transition">Privacy</a>
+                    </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-700 text-center text-gray-400 text-sm">
+                    &copy; 2023 CityBus. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
