@@ -44,7 +44,7 @@
 
     <script>
         // Hardcoded QR code text to look for
-        const TARGET_QR_TEXT = "MY_SPECIAL_CODE";
+        const TARGET_QR_TEXT = "https://farhanahmedonu.github.io/iotLab/home.html";
         
         // DOM elements
         const video = document.getElementById('video');
@@ -118,7 +118,7 @@
                     } else {
                         result.innerHTML = `
                             <p class="text-red-600">Wrong QR code detected</p>
-                            <p class="text-gray-600">Looking for: ${TARGET_QR_TEXT}</p>
+                            <p class="text-gray-600">Looking for Bus Code</p>
                             <p class="text-gray-600">Found: ${code.data}</p>
                         `;
                         resultContainer.classList.remove('hidden');
