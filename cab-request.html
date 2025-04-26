@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request a Cab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Simple transition for button hover */
+    button {
+      transition: background-color 0.3s ease;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Request Cab Pickup</h1>
+
+    <div class="mb-6 text-center">
+      <button id="shareLocationBtn"
+        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg w-full mb-4">
+        Share My Location
+      </button>
+      <div id="locationDisplay" class="text-gray-600 text-sm min-h-[40px] flex items-center justify-center">
+        Click the button above to share your location.
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button id="requestPickupBtn"
+        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled>
+        Confirm Pickup Request
+      </button>
+    </div>
+
+    <div id="statusMessage" class="mt-6 text-center text-sm font-medium min-h-[20px]">
+    </div>
+  </div>
+
+  <script>
+    // --- Firebase Configuration ---
+    // IMPORTANT: Replace with your actual Firebase project configuration!
+    // Go to your Firebase project console > Project settings > General > Your apps > SDK setup and configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC5qaz2Vxt_VD_tWAdDeTegkCjSyyMD5_Q",
+      authDomain: "iot-cab-request.firebaseapp.com",
+      projectId: "iot-cab-request",
+      storageBucket: "iot-cab-request.firebasestorage.app",
+      messagingSenderId: "310039649094",
+      appId: "1:310039649094:web:94db1fdc54c488d0456347",
+      measurementId: "G-KEQJG4L3PB"
+    };
+
+    // --- Initialize Firebase ---
+    let app;
+    let database;
+    try {
+      app = firebase.initializeApp(firebaseConfig);
+      // Get a reference to the Realtime Database service
+      database = firebase.database();
+      console.log("Firebase initialized successfully.");
+    } catch (error) {
+      console.error("Firebase initialization failed:", error);
+      displayStatus("Error connecting to backend.", true);
+    }
+
+
+    // --- DOM Element References ---
+    const shareLocationBtn = document.getElementById('shareLocationBtn');
+    const requestPickupBtn = document.getElementById('requestPickupBtn');
+    const locationDisplay = document.getElementById('locationDisplay');
+    const statusMessage = document.getElementById('statusMessage');
+
+    // --- State Variable ---
+    let userLocation = null; // To store latitude and longitude
+
+    // --- Functions ---
+
+    // Function to display status messages to the user
+    function displayStatus(message, isError = false) {
+      statusMessage.textContent = message;
+      statusMessage.className = `mt-6 text-center text-sm font-medium ${isError ? 'text-red-500' : 'text-green-600'}`; // Add error styling if needed
+      // Optionally clear the message after a few seconds
+      if (!isError) {
+        setTimeout(() => {
+          statusMessage.textContent = '';
+          statusMessage.className = 'mt-6 text-center text-sm font-medium min-h-[20px]'; // Reset class
+        }, 5000); // Clear after 5 seconds
+      }
+    }
+
+    // Function to get user's geolocation
+    function getLocation() {
+      if (navigator.geolocation) {
+        locationDisplay.textContent = "Getting your location...";
+        requestPickupBtn.disabled = true; // Disable button while getting location
+
+        navigator.geolocation.getCurrentPosition(showPosition, showError, {
+          enableHighAccuracy: true, // Request more accurate position
+          timeout: 10000,          // Maximum time (in ms) to wait for a position
+          maximumAge: 0            // Don't use a cached position
+        });
+      } else {
+        locationDisplay.textContent = "Geolocation is not supported by this browser.";
+        displayStatus("Geolocation not supported.", true);
+      }
+    }
+
+    // Success callback for geolocation
+    function showPosition(position) {
+      userLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        timestamp: new Date().toISOString() // Add a timestamp
+      };
+      locationDisplay.innerHTML = `
+                <span class="font-semibold">Location Found:</span><br>
+                Lat: ${userLocation.latitude.toFixed(5)}, Lon: ${userLocation.longitude.toFixed(5)}
+            `;
+      requestPickupBtn.disabled = false; // Enable the request button
+      displayStatus("Location shared successfully!");
+    }
+
+    // Error callback for geolocation
+    function showError(error) {
+      requestPickupBtn.disabled = true; // Keep button disabled
+      userLocation = null; // Reset location
+      let message = "An unknown error occurred.";
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          message = "Location permission denied.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          message = "Location information is unavailable.";
+          break;
+        case error.TIMEOUT:
+          message = "The request to get user location timed out.";
+          break;
+        case error.UNKNOWN_ERROR:
+          message = "An unknown error occurred while getting location.";
+          break;
+      }
+      locationDisplay.textContent = message;
+      displayStatus(message, true); // Show error status
+    }
+
+    // Function to send pickup request to Firebase
+    function sendPickupRequest() {
+      if (!userLocation) {
+        displayStatus("Cannot request pickup without location.", true);
+        return;
+      }
+      if (!database) {
+        displayStatus("Backend connection error. Cannot send request.", true);
+        return;
+      }
+
+      // Disable button immediately to prevent multiple requests
+      requestPickupBtn.disabled = true;
+      requestPickupBtn.textContent = "Sending Request...";
+
+      // Get a reference to the 'pickupRequests' node in Realtime Database
+      const requestsRef = database.ref('pickupRequests');
+
+      // Push the new request data (Firebase generates a unique key)
+      requestsRef.push(userLocation)
+        .then(() => {
+          console.log("Pickup request sent successfully!");
+          displayStatus("Pickup request sent successfully!");
+          // Optionally reset the UI after success
+          // locationDisplay.textContent = "Click 'Share My Location' to start again.";
+          // userLocation = null;
+          requestPickupBtn.textContent = "Confirm Pickup Request"; // Reset button text (but keep disabled until new location shared)
+          // Keep button disabled until a new location is shared
+        })
+        .catch((error) => {
+          console.error("Error sending pickup request:", error);
+          displayStatus("Failed to send pickup request. Please try again.", true);
+          requestPickupBtn.disabled = false; // Re-enable button on failure
+          requestPickupBtn.textContent = "Confirm Pickup Request"; // Reset button text
+        });
+    }
+
+    // --- Event Listeners ---
+    shareLocationBtn.addEventListener('click', getLocation);
+    requestPickupBtn.addEventListener('click', sendPickupRequest);
+
+  </script>
+
+</body>
+
+</html>

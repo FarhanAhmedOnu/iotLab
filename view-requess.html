@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cab Requests Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Set height for the map container */
+        #map {
+            height: calc(100vh - 80px);
+            /* Adjust height as needed, subtracting header/footer */
+            width: 100%;
+            border-radius: 0.5rem;
+            /* Optional: rounded corners */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            /* Optional: shadow */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    <header class="bg-blue-600 text-white p-4 text-center shadow-md">
+        <h1 class="text-xl font-bold">Live Cab Request Locations</h1>
+    </header>
+
+    <main class="p-4">
+        <div id="map"></div>
+        <div id="statusMessage" class="mt-4 text-center text-sm text-gray-600">
+            Loading map and connecting to database...
+        </div>
+    </main>
+
+    <script>
+        // --- Firebase Configuration ---
+        // IMPORTANT: Use the *SAME* Firebase configuration as your cab request app!
+        const firebaseConfig = {
+            apiKey: "AIzaSyC5qaz2Vxt_VD_tWAdDeTegkCjSyyMD5_Q",
+            authDomain: "iot-cab-request.firebaseapp.com",
+            projectId: "iot-cab-request",
+            storageBucket: "iot-cab-request.firebasestorage.app",
+            messagingSenderId: "310039649094",
+            appId: "1:310039649094:web:94db1fdc54c488d0456347",
+            measurementId: "G-KEQJG4L3PB"
+        };
+
+        // --- Initialize Firebase ---
+        let app;
+        let database;
+        try {
+            // Check if Firebase app is already initialized (useful in some scenarios, though less likely here)
+            if (!firebase.apps.length) {
+                app = firebase.initializeApp(firebaseConfig);
+            } else {
+                app = firebase.app(); // Get the default app if already initialized
+            }
+            database = firebase.database();
+            console.log("Firebase initialized successfully for map view.");
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            displayStatus("Error connecting to backend.", true);
+        }
+
+        // --- DOM Element References ---
+        const statusMessage = document.getElementById('statusMessage');
+
+        // --- Map Initialization ---
+        // Initialize the map and set its view to a default location (e.g., center of a city)
+        // Coordinates for Dhaka, Bangladesh
+        const map = L.map('map').setView([23.8103, 90.4125], 12); // Latitude, Longitude, Zoom level
+
+        // Add a tile layer (map background) from OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // --- Layer Group for Markers ---
+        // Use a layer group to easily clear old markers if needed (though 'onValue' replaces all)
+        const requestMarkersLayer = L.layerGroup().addTo(map);
+
+        // --- Functions ---
+
+        // Function to display status messages
+        function displayStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.className = `mt-4 text-center text-sm ${isError ? 'text-red-500 font-semibold' : 'text-gray-600'}`;
+        }
+
+        // Function to add or update markers on the map
+        function updateMapMarkers(requestsData) {
+            // Clear existing markers from the layer group
+            requestMarkersLayer.clearLayers();
+
+            if (!requestsData) {
+                displayStatus("No active pickup requests found.");
+                return; // No data to display
+            }
+
+            let count = 0;
+            // Loop through each request in the data object
+            for (const requestId in requestsData) {
+                const request = requestsData[requestId];
+                // Ensure the request has valid latitude and longitude
+                if (request && typeof request.latitude === 'number' && typeof request.longitude === 'number') {
+                    const lat = request.latitude;
+                    const lon = request.longitude;
+                    const timestamp = request.timestamp ? new Date(request.timestamp).toLocaleString() : 'No timestamp';
+
+                    // Create a marker
+                    const marker = L.marker([lat, lon]);
+
+                    // Add a popup to the marker
+                    marker.bindPopup(`<b>Request ID:</b> ${requestId}<br><b>Time:</b> ${timestamp}<br><b>Coords:</b> ${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+
+                    // Add the marker to the layer group
+                    requestMarkersLayer.addLayer(marker);
+                    count++;
+                } else {
+                    console.warn("Skipping invalid request data:", requestId, request);
+                }
+            }
+            displayStatus(`Displaying ${count} active pickup request(s). Map updates in real-time.`);
+            // Optional: Fit map bounds to markers if needed, but can be jumpy with real-time updates
+            // if (count > 0) {
+            //    map.fitBounds(requestMarkersLayer.getBounds());
+            // }
+        }
+
+
+        // --- Firebase Data Listener ---
+        if (database) {
+            // Get a reference to the 'pickupRequests' node
+            const requestsRef = database.ref('pickupRequests');
+
+            // Listen for changes in the entire 'pickupRequests' node
+            // 'onValue' fires once initially and then whenever the data changes
+            requestsRef.on('value', (snapshot) => {
+                const data = snapshot.val(); // Get the data object
+                console.log("Received data from Firebase:", data);
+                updateMapMarkers(data); // Update the map with the new data
+            }, (error) => {
+                console.error("Error fetching data from Firebase:", error);
+                displayStatus("Error fetching pickup requests. Check console.", true);
+            });
+            displayStatus("Connected to database. Waiting for requests...");
+
+        } else {
+            displayStatus("Database connection not available.", true);
+        }
+
+    </script>
+
+</body>
+
+</html>
