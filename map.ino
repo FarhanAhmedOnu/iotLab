@@ -149,7 +149,7 @@ static const uint8_t image_data_Saraarray[1024] = {
 
 // ==== CONFIGURATION ====
 const char* ssid = "Onu";
-const char* password = "farhan110";
+const char* password = "";
 const char* thingSpeakApiKey = "";
 const char* thingSpeakURL = "http://api.thingspeak.com/update";
 
